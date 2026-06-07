@@ -1,0 +1,47 @@
+name: APK Derle
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:   # Actions sekmesinden elle de başlatabilirsin
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Kodu çek
+        uses: actions/checkout@v4
+
+      - name: Java kur
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Flutter kur
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Android iskeletini üret
+        run: flutter create --platforms=android --org com.hopp.app .
+
+      - name: İzinleri ekle (kamera + konum)
+        run: |
+          MAN=android/app/src/main/AndroidManifest.xml
+          sed -i 's|<application|<uses-permission android:name="android.permission.INTERNET"/>\n    <uses-permission android:name="android.permission.CAMERA"/>\n    <uses-permission android:name="android.permission.RECORD_AUDIO"/>\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>\n    <uses-feature android:name="android.hardware.camera" android:required="false"/>\n    <application|' "$MAN"
+          echo "----- AndroidManifest.xml -----"
+          cat "$MAN"
+
+      - name: Paketleri al
+        run: flutter pub get
+
+      - name: APK derle (release)
+        run: flutter build apk --release
+
+      - name: APK'yı yükle (Artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: hopp-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
