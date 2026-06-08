@@ -1,3 +1,4 @@
+
 name: APK Derle
 
 on:
@@ -24,10 +25,24 @@ jobs:
           channel: stable
 
       - name: Android iskeletini uret
-        run: flutter create --platforms=android --org com.hopp.app .
+        run: flutter create --platforms=android --org com.hopp.app --project-name hopp .
 
       - name: Izinleri ekle
         run: |
           MAN=android/app/src/main/AndroidManifest.xml
-          sed -i 's|\n    \n    \n    \n    \n    \n    
-    
+          PERMS='<uses-permission android:name="android.permission.INTERNET"/><uses-permission android:name="android.permission.CAMERA"/><uses-permission android:name="android.permission.RECORD_AUDIO"/><uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/><uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>'
+          sed -i "s#<application#${PERMS}<application#" "$MAN"
+          cat "$MAN"
+
+      - name: Paketleri al
+        run: flutter pub get
+
+      - name: APK derle
+        run: flutter build apk --release
+
+      - name: APK yukle
+        uses: actions/upload-artifact@v4
+        with:
+          name: hopp-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
