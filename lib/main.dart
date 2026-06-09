@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: Brightness.light,
+    systemNavigationBarColor: Color(0xFF0D1220),
+  ));
   runApp(const HoppApp());
 }
 
@@ -43,36 +50,32 @@ class _WebScreenState extends State<WebScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0D1220),
-      body: SafeArea(
-        child: InAppWebView(
-          initialUrlRequest:
-              URLRequest(url: WebUri('https://hoppapk.netlify.app/')),
-          initialSettings: InAppWebViewSettings(
-            javaScriptEnabled: true,
-            mediaPlaybackRequiresUserGesture: false,
-            allowsInlineMediaPlayback: true,
-            iframeAllow: "camera; microphone",
-            iframeAllowFullscreen: true,
-            geolocationEnabled: true,
-            useHybridComposition: true,
-            supportZoom: false,
-          ),
-          // Kamera / mikrofon istekleri → otomatik izin ver
-          onPermissionRequest: (controller, request) async {
-            return PermissionResponse(
-              resources: request.resources,
-              action: PermissionResponseAction.GRANT,
-            );
-          },
-          // Konum izni (harita)
-          onGeolocationPermissionsShowPrompt: (controller, origin) async {
-            return GeolocationPermissionShowPromptResponse(
-              origin: origin,
-              allow: true,
-              retain: true,
-            );
-          },
+      body: InAppWebView(
+        initialUrlRequest:
+            URLRequest(url: WebUri('https://hoppapp.netlify.app/')),
+        initialSettings: InAppWebViewSettings(
+          javaScriptEnabled: true,
+          mediaPlaybackRequiresUserGesture: false,
+          allowsInlineMediaPlayback: true,
+          iframeAllow: "camera; microphone",
+          iframeAllowFullscreen: true,
+          geolocationEnabled: true,
+          useHybridComposition: true,
+          supportZoom: false,
         ),
+        onPermissionRequest: (controller, request) async {
+          return PermissionResponse(
+            resources: request.resources,
+            action: PermissionResponseAction.GRANT,
+          );
+        },
+        onGeolocationPermissionsShowPrompt: (controller, origin) async {
+          return GeolocationPermissionShowPromptResponse(
+            origin: origin,
+            allow: true,
+            retain: true,
+          );
+        },
       ),
     );
   }
