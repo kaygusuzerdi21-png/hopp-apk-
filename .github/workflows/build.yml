@@ -1,4 +1,3 @@
-
 name: APK Derle
 
 on:
@@ -34,8 +33,46 @@ jobs:
           sed -i "s#<application#${PERMS}<application#" "$MAN"
           cat "$MAN"
 
+      # ── UYGULAMA İKONU — resim yüklemeden, burada otomatik üretilir ──
+      - name: Ikon uret (ImageMagick)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y imagemagick fonts-dejavu-core
+          mkdir -p assets/icon
+          # Tam ikon: mavi zemin + beyaz "hopp"
+          convert -size 1024x1024 xc:'#1B80FD' \
+            -gravity center -font /usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf \
+            -pointsize 360 -fill white -annotate +0-10 'hopp' \
+            assets/icon/hopp.png
+          # Adaptive ön plan: şeffaf zemin + beyaz "hopp" (güvenli bölgede daha küçük)
+          convert -size 1024x1024 xc:none \
+            -gravity center -font /usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf \
+            -pointsize 250 -fill white -annotate +0-10 'hopp' \
+            assets/icon/hopp_foreground.png
+          ls -la assets/icon
+
+      - name: pubspec.yaml'a ikon ayarini ekle
+        run: |
+          # flutter_launcher_icons dev bagimliligini ekle (zaten yoksa)
+          grep -q "flutter_launcher_icons:" pubspec.yaml || \
+            sed -i 's#^dev_dependencies:#dev_dependencies:\n  flutter_launcher_icons: ^0.14.1#' pubspec.yaml
+          # ikon yapilandirma blogunu sona ekle (zaten yoksa)
+          grep -q "^flutter_launcher_icons:" pubspec.yaml || cat >> pubspec.yaml <<'EOF'
+
+flutter_launcher_icons:
+  android: "ic_launcher"
+  min_sdk_android: 21
+  image_path: "assets/icon/hopp.png"
+  adaptive_icon_background: "#1B80FD"
+  adaptive_icon_foreground: "assets/icon/hopp_foreground.png"
+EOF
+          echo "── pubspec.yaml ──"; cat pubspec.yaml
+
       - name: Paketleri al
         run: flutter pub get
+
+      - name: Ikonu olustur
+        run: dart run flutter_launcher_icons
 
       - name: APK derle
         run: flutter build apk --release
