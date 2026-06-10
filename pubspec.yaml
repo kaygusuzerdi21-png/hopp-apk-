@@ -14,6 +14,20 @@ dependencies:
 
 dev_dependencies:
   flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.14.1
+
+# ── Uygulama ikonu (ana ekran) ──────────────────────────────────────────────
+# Derleme sırasında `dart run flutter_launcher_icons` çalışınca bu ayarlardan
+# tüm mipmap boyutları + adaptive (Android 8+) ikon otomatik üretilir.
+flutter_launcher_icons:
+  android: "ic_launcher"
+  min_sdk_android: 21
+  image_path: "assets/icon/hopp.png"
+  adaptive_icon_background: "#1B80FD"
+  adaptive_icon_foreground: "assets/icon/hopp_foreground.png"
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/icon/hopp.png
+    - assets/icon/hopp_foreground.png
