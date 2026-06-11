@@ -38,34 +38,16 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y imagemagick
           mkdir -p assets/icon
-          if [ -f hopp.png ]; then SRC=hopp.png;
-          elif [ -f assets/icon/hopp.png ]; then SRC=assets/icon/hopp.png;
-          else echo "HATA: hopp.png bulunamadi"; exit 1; fi
+          if [ -f hopp.png ]; then SRC=hopp.png; elif [ -f assets/icon/hopp.png ]; then SRC=assets/icon/hopp.png; else echo "HATA: hopp.png bulunamadi"; exit 1; fi
           echo "Kaynak icon: $SRC"
-          convert "$SRC" -resize 1024x1024^ -gravity center -extent 1024x1024 \
-            -alpha off -fuzz 14% -fill '#1883fd' \
-            -draw 'color 1,1 floodfill' \
-            -draw 'color 1022,1 floodfill' \
-            -draw 'color 1,1022 floodfill' \
-            -draw 'color 1022,1022 floodfill' \
-            assets/icon/hopp.png
-          convert assets/icon/hopp.png -resize 66% -background '#1883fd' \
-            -gravity center -extent 1024x1024 assets/icon/hopp_foreground.png
+          convert "$SRC" -resize 1024x1024^ -gravity center -extent 1024x1024 -alpha off -fuzz 14% -fill '#1883fd' -draw 'color 1,1 floodfill' -draw 'color 1022,1 floodfill' -draw 'color 1,1022 floodfill' -draw 'color 1022,1022 floodfill' assets/icon/hopp.png
+          convert assets/icon/hopp.png -resize 66% -background '#1883fd' -gravity center -extent 1024x1024 assets/icon/hopp_foreground.png
           ls -la assets/icon
 
       - name: pubspec ikon ayari
         run: |
-          grep -q "flutter_launcher_icons:" pubspec.yaml || \
-            sed -i 's#^dev_dependencies:#dev_dependencies:\n  flutter_launcher_icons: ^0.14.1#' pubspec.yaml
-          grep -q "^flutter_launcher_icons:" pubspec.yaml || cat >> pubspec.yaml <<'EOF'
-
-flutter_launcher_icons:
-  android: "ic_launcher"
-  min_sdk_android: 21
-  image_path: "assets/icon/hopp.png"
-  adaptive_icon_background: "#1883fd"
-  adaptive_icon_foreground: "assets/icon/hopp_foreground.png"
-EOF
+          grep -q "^flutter_launcher_icons:" pubspec.yaml || printf '\nflutter_launcher_icons:\n  android: "ic_launcher"\n  min_sdk_android: 21\n  image_path: "assets/icon/hopp.png"\n  adaptive_icon_background: "#1883fd"\n  adaptive_icon_foreground: "assets/icon/hopp_foreground.png"\n' >> pubspec.yaml
+          grep -q "flutter_launcher_icons: \^" pubspec.yaml || sed -i 's#^dev_dependencies:#dev_dependencies:\n  flutter_launcher_icons: ^0.14.1#' pubspec.yaml
           cat pubspec.yaml
 
       - name: Paketleri al
