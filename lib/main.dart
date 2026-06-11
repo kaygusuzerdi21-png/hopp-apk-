@@ -32,6 +32,12 @@ class WebScreen extends StatefulWidget {
 }
 
 class _WebScreenState extends State<WebScreen> {
+  InAppWebViewController? _controller;
+
+  static const String _chromeUA =
+      'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 '
+      '(KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36';
+
   @override
   void initState() {
     super.initState();
@@ -50,32 +56,45 @@ class _WebScreenState extends State<WebScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0D1220),
-      body: InAppWebView(
-        initialUrlRequest:
-            URLRequest(url: WebUri('https://hoppapp.netlify.app/')),
-        initialSettings: InAppWebViewSettings(
-          javaScriptEnabled: true,
-          mediaPlaybackRequiresUserGesture: false,
-          allowsInlineMediaPlayback: true,
-          iframeAllow: "camera; microphone",
-          iframeAllowFullscreen: true,
-          geolocationEnabled: true,
-          useHybridComposition: true,
-          supportZoom: false,
+      body: SafeArea(
+        child: InAppWebView(
+          initialUrlRequest:
+              URLRequest(url: WebUri('https://hoppapp.netlify.app/')),
+          initialSettings: InAppWebViewSettings(
+            javaScriptEnabled: true,
+            userAgent: _chromeUA,
+            mediaPlaybackRequiresUserGesture: false,
+            allowsInlineMediaPlayback: true,
+            iframeAllow: "camera; microphone",
+            iframeAllowFullscreen: true,
+            geolocationEnabled: true,
+            useHybridComposition: true,
+            supportZoom: false,
+            javaScriptCanOpenWindowsAutomatically: true,
+            supportMultipleWindows: true,
+            thirdPartyCookiesEnabled: true,
+          ),
+          onWebViewCreated: (controller) {
+            _controller = controller;
+          },
+          onCreateWindow: (controller, createWindowAction) async {
+            controller.loadUrl(urlRequest: createWindowAction.request);
+            return false;
+          },
+          onPermissionRequest: (controller, request) async {
+            return PermissionResponse(
+              resources: request.resources,
+              action: PermissionResponseAction.GRANT,
+            );
+          },
+          onGeolocationPermissionsShowPrompt: (controller, origin) async {
+            return GeolocationPermissionShowPromptResponse(
+              origin: origin,
+              allow: true,
+              retain: true,
+            );
+          },
         ),
-        onPermissionRequest: (controller, request) async {
-          return PermissionResponse(
-            resources: request.resources,
-            action: PermissionResponseAction.GRANT,
-          );
-        },
-        onGeolocationPermissionsShowPrompt: (controller, origin) async {
-          return GeolocationPermissionShowPromptResponse(
-            origin: origin,
-            allow: true,
-            retain: true,
-          );
-        },
       ),
     );
   }
