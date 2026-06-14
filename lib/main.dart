@@ -60,7 +60,7 @@ class _WebScreenState extends State<WebScreen> {
       backgroundColor: const Color(0xFFFFFFFF),
       body: InAppWebView(
         initialUrlRequest:
-            URLRequest(url: WebUri('https://hoppapp.netlify.app/')),
+            URLRequest(url: WebUri('https://hopptrapp.netlify.app/')),
         initialSettings: InAppWebViewSettings(
           javaScriptEnabled: true,
           userAgent: _chromeUA,
