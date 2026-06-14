@@ -10,8 +10,8 @@ void main() {
     statusBarColor: Colors.transparent,
     systemNavigationBarColor: Colors.transparent,
     systemNavigationBarDividerColor: Colors.transparent,
-    statusBarIconBrightness: Brightness.light,
-    systemNavigationBarIconBrightness: Brightness.light,
+    statusBarIconBrightness: Brightness.dark,
+    systemNavigationBarIconBrightness: Brightness.dark,
   ));
   runApp(const HoppApp());
 }
@@ -57,7 +57,7 @@ class _WebScreenState extends State<WebScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF161D31),
+      backgroundColor: const Color(0xFFFFFFFF),
       body: InAppWebView(
         initialUrlRequest:
             URLRequest(url: WebUri('https://hoppapp.netlify.app/')),
@@ -98,5 +98,4 @@ class _WebScreenState extends State<WebScreen> {
         },
       ),
     );
-  }
 }
