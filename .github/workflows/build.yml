@@ -27,6 +27,27 @@ jobs:
       - name: Android iskeletini uret
         run: flutter create --platforms=android --org com.hopp.app --project-name hopp .
 
+      - name: Imza anahtarini hazirla
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "HATA: KEYSTORE_BASE64 secret yok."
+            exit 1
+          fi
+          echo "$KEYSTORE_BASE64" | base64 -d > android/app/upload.jks
+          cat > android/key.properties <<EOF
+          storePassword=hopp2026
+          keyPassword=hopp2026
+          keyAlias=upload
+          storeFile=upload.jks
+          EOF
+          GR=android/app/build.gradle
+          sed -i '1i def keystoreProperties = new Properties()\ndef keystorePropertiesFile = rootProject.file("app/key.properties")\nif (keystorePropertiesFile.exists()) { keystoreProperties.load(new FileInputStream(keystorePropertiesFile)) }' "$GR"
+          sed -i '0,/android {/s//android {\n    signingConfigs {\n        release {\n            keyAlias keystoreProperties["keyAlias"]\n            keyPassword keystoreProperties["keyPassword"]\n            storeFile keystoreProperties["storeFile"] ? file(keystoreProperties["storeFile"]) : null\n            storePassword keystoreProperties["storePassword"]\n        }\n    }/' "$GR"
+          sed -i 's/signingConfig signingConfigs.debug/signingConfig signingConfigs.release/' "$GR"
+          echo "----- build.gradle -----"; cat "$GR"
+
       - name: Izinleri ekle
         run: |
           MAN=android/app/src/main/AndroidManifest.xml
