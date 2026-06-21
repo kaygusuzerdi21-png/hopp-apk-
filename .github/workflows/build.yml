@@ -43,8 +43,7 @@ jobs:
           storeFile=upload.jks
           EOF
           GR=android/app/build.gradle
-          sed -i '1i def keystoreProperties = new Properties()\ndef keystorePropertiesFile = rootProject.file("app/key.properties")\nif (keystorePropertiesFile.exists()) { keystoreProperties.load(new FileInputStream(keystorePropertiesFile)) }' "$GR"
-          sed -i '0,/android {/s//android {\n    signingConfigs {\n        release {\n            keyAlias keystoreProperties["keyAlias"]\n            keyPassword keystoreProperties["keyPassword"]\n            storeFile keystoreProperties["storeFile"] ? file(keystoreProperties["storeFile"]) : null\n            storePassword keystoreProperties["storePassword"]\n        }\n    }/' "$GR"
+          sed -i '0,/android {/s##def keystoreProperties = new Properties()\ndef keystorePropertiesFile = rootProject.file("key.properties")\nif (keystorePropertiesFile.exists()) { keystoreProperties.load(new FileInputStream(keystorePropertiesFile)) }\n\nandroid {\n    signingConfigs {\n        release {\n            keyAlias keystoreProperties["keyAlias"]\n            keyPassword keystoreProperties["keyPassword"]\n            storeFile keystoreProperties["storeFile"] ? file(keystoreProperties["storeFile"]) : null\n            storePassword keystoreProperties["storePassword"]\n        }\n    }##'
           sed -i 's/signingConfig signingConfigs.debug/signingConfig signingConfigs.release/' "$GR"
           echo "----- build.gradle -----"; cat "$GR"
 
