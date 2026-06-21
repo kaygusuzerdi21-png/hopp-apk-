@@ -38,7 +38,7 @@ jobs:
           echo "$KEYSTORE_BASE64" | base64 -d > android/app/upload.jks
           printf 'storePassword=hopp2026\nkeyPassword=hopp2026\nkeyAlias=upload\nstoreFile=upload.jks\n' > android/key.properties
           GR=android/app/build.gradle
-          sed -i '0,/android {/s##def keystoreProperties = new Properties()\ndef keystorePropertiesFile = rootProject.file("key.properties")\nif (keystorePropertiesFile.exists()) { keystoreProperties.load(new FileInputStream(keystorePropertiesFile)) }\n\nandroid {\n    signingConfigs {\n        release {\n            keyAlias keystoreProperties["keyAlias"]\n            keyPassword keystoreProperties["keyPassword"]\n            storeFile keystoreProperties["storeFile"] ? file(keystoreProperties["storeFile"]) : null\n            storePassword keystoreProperties["storePassword"]\n        }\n    }##'
+          sed -i '0,/android {/s##def keystoreProperties = new Properties()\ndef keystorePropertiesFile = rootProject.file("key.properties")\nif (keystorePropertiesFile.exists()) { keystoreProperties.load(new FileInputStream(keystorePropertiesFile)) }\n\nandroid {\n    signingConfigs {\n        release {\n            keyAlias keystoreProperties["keyAlias"]\n            keyPassword keystoreProperties["keyPassword"]\n            storeFile keystoreProperties["storeFile"] ? file(keystoreProperties["storeFile"]) : null\n            storePassword keystoreProperties["storePassword"]\n        }\n    }##' "$GR"
           sed -i 's/signingConfig signingConfigs.debug/signingConfig signingConfigs.release/' "$GR"
           echo "----- build.gradle -----"; cat "$GR"
 
