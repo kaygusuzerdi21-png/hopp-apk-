@@ -26,12 +26,18 @@ jobs:
       - name: Android iskeletini uret
         run: flutter create --platforms=android --org com.hopp.app --project-name hopp .
 
+      - name: AGP surumunu sabitle (proguard/AGP uyumu)
+        run: |
+          sed -i -E 's/(id +"com.android.application" +version +)"[0-9.]+"/\1"8.1.4"/' android/settings.gradle || true
+          sed -i -E 's/(id +"org.jetbrains.kotlin.android" +version +)"[0-9.]+"/\1"1.9.22"/' android/settings.gradle || true
+          printf '\nandroid.enableR8.fullMode=false\norg.gradle.jvmargs=-Xmx4g\n' >> android/gradle.properties
+          echo "----- settings.gradle -----"; cat android/settings.gradle
+
       - name: Izinleri ekle
         run: |
           MAN=android/app/src/main/AndroidManifest.xml
           PERMS='<uses-permission android:name="android.permission.INTERNET"/><uses-permission android:name="android.permission.CAMERA"/><uses-permission android:name="android.permission.RECORD_AUDIO"/><uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/><uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/><uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>'
           sed -i "s#<application#${PERMS}<application#" "$MAN"
-          # AdMob App ID (hopp gercek)
           ADMOB='<meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="ca-app-pub-3092168413729990~6832555121"/>'
           sed -i "s#</application>#${ADMOB}</application>#" "$MAN"
           cat "$MAN"
@@ -40,7 +46,8 @@ jobs:
         run: flutter pub get
 
       - name: Uygulama ikonunu uret
-        run: dart run flutter_launcher_icons
+        continue-on-error: true
+        run: dart run flutter_launcher_icons || echo "ikon atlandi"
 
       - name: APK derle
         run: flutter build apk --release
