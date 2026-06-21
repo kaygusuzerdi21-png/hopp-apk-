@@ -22,16 +22,10 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: "3.24.5"
 
       - name: Android iskeletini uret
         run: flutter create --platforms=android --org com.hopp.app --project-name hopp .
-
-      - name: AGP surumunu sabitle (proguard/AGP uyumu)
-        run: |
-          sed -i -E 's/(id +"com.android.application" +version +)"[0-9.]+"/\1"8.1.4"/' android/settings.gradle || true
-          sed -i -E 's/(id +"org.jetbrains.kotlin.android" +version +)"[0-9.]+"/\1"1.9.22"/' android/settings.gradle || true
-          printf '\nandroid.enableR8.fullMode=false\norg.gradle.jvmargs=-Xmx4g\n' >> android/gradle.properties
-          echo "----- settings.gradle -----"; cat android/settings.gradle
 
       - name: Izinleri ekle
         run: |
