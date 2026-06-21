@@ -1,17 +1,64 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:location/location.dart' as loc;
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+
+// ── AdMob reklam birimi ID'leri ───────────────────────────────────────────
+// ŞU AN GOOGLE TEST ID'LERİ KULLANILIYOR (gerçek para kazandırmaz, güvenle
+// test edebilirsin). AdMob hesabını açıp kendi reklam birimlerini
+// oluşturunca AŞAĞIDAKİ 3 değeri kendi ID'lerinle değiştir + AndroidManifest
+// içindeki APPLICATION_ID'yi de güncelle (build.yml'de).
+const String _kBannerAdUnit = 'ca-app-pub-3092168413729990/5053559271';   // hopp banner
+const String _kRewardedAdUnit = 'ca-app-pub-3092168413729990/2876998241'; // hopp odullu
+
+// Telefona GERÇEK bildirim düşürmek için yerel bildirim eklentisi.
+// Web katmanı (notifications.jsx) köprüden 'hoppNotify' çağırır → burada OS
+// bildirimi gösterilir. Android WebView Web Notification API'sini desteklemediği
+// için bu köprü şarttır.
+final FlutterLocalNotificationsPlugin _notif = FlutterLocalNotificationsPlugin();
+const AndroidNotificationChannel _channel = AndroidNotificationChannel(
+  'hopp_default', 'hopp Bildirimleri',
+  description: 'Mesaj, beğeni ve yol kesişme bildirimleri',
+  importance: Importance.high,
+);
+
+Future<void> _initNotifications() async {
+  const android = AndroidInitializationSettings('@mipmap/ic_launcher');
+  await _notif.initialize(const InitializationSettings(android: android));
+  await _notif
+      .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+      ?.createNotificationChannel(_channel);
+}
+
+int _notifId = 0;
+Future<void> _showNotif(String title, String body) async {
+  await _notif.show(
+    _notifId++, title, body,
+    const NotificationDetails(
+      android: AndroidNotificationDetails(
+        'hopp_default', 'hopp Bildirimleri',
+        channelDescription: 'Mesaj, beğeni ve yol kesişme bildirimleri',
+        importance: Importance.high,
+        priority: Priority.high,
+      ),
+    ),
+  );
+}
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  MobileAds.instance.initialize(); // AdMob başlat
+  // tam ekran (edge-to-edge) + şeffaf durum çubuğu → üstte siyah şerit kalmaz
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
-    systemNavigationBarColor: Colors.transparent,
-    systemNavigationBarDividerColor: Colors.transparent,
-    statusBarIconBrightness: Brightness.dark,
-    systemNavigationBarIconBrightness: Brightness.dark,
+    statusBarIconBrightness: Brightness.light,
+    systemNavigationBarColor: Color(0xFF0D1220),
   ));
   runApp(const HoppApp());
 }
@@ -34,37 +81,112 @@ class WebScreen extends StatefulWidget {
 }
 
 class _WebScreenState extends State<WebScreen> {
-  InAppWebViewController? _controller;
-
-  static const String _chromeUA =
-      'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 '
-      '(KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36';
+  BannerAd? _banner;
+  bool _bannerReady = false;
+  RewardedAd? _rewarded;
 
   @override
   void initState() {
     super.initState();
-    _askPermissions();
+    _bootstrap();
+    _loadBanner();
+    _loadRewarded();
   }
 
-  Future<void> _askPermissions() async {
+  @override
+  void dispose() {
+    _banner?.dispose();
+    _rewarded?.dispose();
+    super.dispose();
+  }
+
+  // ── Banner (alt menünün altında, ekran dibinde) ──
+  void _loadBanner() {
+    _banner = BannerAd(
+      adUnitId: _kBannerAdUnit,
+      size: AdSize.banner,
+      request: const AdRequest(),
+      listener: BannerAdListener(
+        onAdLoaded: (_) { if (mounted) setState(() => _bannerReady = true); },
+        onAdFailedToLoad: (ad, err) { ad.dispose(); _banner = null; },
+      ),
+    )..load();
+  }
+
+  // ── Ödüllü reklam (kilitli profili açmak için) ──
+  void _loadRewarded() {
+    RewardedAd.load(
+      adUnitId: _kRewardedAdUnit,
+      request: const AdRequest(),
+      rewardedAdLoadCallback: RewardedAdLoadCallback(
+        onAdLoaded: (ad) { _rewarded = ad; },
+        onAdFailedToLoad: (err) { _rewarded = null; },
+      ),
+    );
+  }
+
+  // Reklamı göster; ödül kazanılırsa true döner (web bunu bekler)
+  Future<bool> _showRewarded() async {
+    final ad = _rewarded;
+    if (ad == null) { _loadRewarded(); return false; }
+    final completer = Completer<bool>();
+    bool earned = false;
+    ad.fullScreenContentCallback = FullScreenContentCallback(
+      onAdDismissedFullScreenContent: (ad) {
+        ad.dispose(); _rewarded = null; _loadRewarded();
+        if (!completer.isCompleted) completer.complete(earned);
+      },
+      onAdFailedToShowFullScreenContent: (ad, err) {
+        ad.dispose(); _rewarded = null; _loadRewarded();
+        if (!completer.isCompleted) completer.complete(false);
+      },
+    );
+    ad.show(onUserEarnedReward: (_, __) { earned = true; });
+    return completer.future;
+  }
+
+  Future<void> _bootstrap() async {
+    await _initNotifications();
+    // açılışta kamera/mikrofon/konum + (Android 13+) bildirim izinlerini iste
     await [
       Permission.camera,
       Permission.microphone,
       Permission.location,
+      Permission.notification,
     ].request();
+    // GPS kapalıysa, Google'ın "Konum Doğruluğu / Etkinleştir" sistem
+    // penceresini aç — kullanıcı tek dokunuşla konumu açar (manuel
+    // kontrol panelinden açmaya gerek kalmaz).
+    await _ensureLocationService();
+  }
+
+  Future<void> _ensureLocationService() async {
+    try {
+      final location = loc.Location();
+      bool enabled = await location.serviceEnabled();
+      if (!enabled) {
+        // → "Devam etmek için cihazınızın Konum Doğruluğu'nu kullanması gerekiyor"
+        enabled = await location.requestService();
+      }
+    } catch (_) {
+      // konum servisi sorgulanamazsa sessizce geç (uygulama yine de açılır)
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFFFFF),
-      body: InAppWebView(
+      backgroundColor: const Color(0xFF0D1220),
+      body: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            Expanded(
+              child: InAppWebView(
         initialUrlRequest:
-            URLRequest(url: WebUri('https://hopptrapp.netlify.app/')),
+            URLRequest(url: WebUri('https://hoppapp.netlify.app/')),
         initialSettings: InAppWebViewSettings(
           javaScriptEnabled: true,
-          userAgent: _chromeUA,
-          transparentBackground: true,
           mediaPlaybackRequiresUserGesture: false,
           allowsInlineMediaPlayback: true,
           iframeAllow: "camera; microphone",
@@ -72,23 +194,78 @@ class _WebScreenState extends State<WebScreen> {
           geolocationEnabled: true,
           useHybridComposition: true,
           supportZoom: false,
-          javaScriptCanOpenWindowsAutomatically: true,
-          supportMultipleWindows: true,
-          thirdPartyCookiesEnabled: true,
         ),
         onWebViewCreated: (controller) {
-          _controller = controller;
+          // ── Web ↔ Native köprüsü ──────────────────────────────────────
+          // 1) Web 'hoppNotify' çağırınca telefona gerçek bildirim düşür
+          controller.addJavaScriptHandler(
+            handlerName: 'hoppNotify',
+            callback: (args) async {
+              final title = args.isNotEmpty ? args[0].toString() : 'hopp';
+              final body = args.length > 1 ? args[1].toString() : '';
+              await _showNotif(title, body);
+              return true;
+            },
+          );
+          // 2) Web 'hoppRequestNotif' → Android 13+ bildirim iznini iste
+          controller.addJavaScriptHandler(
+            handlerName: 'hoppRequestNotif',
+            callback: (args) async {
+              final st = await Permission.notification.request();
+              return st.isGranted;
+            },
+          );
+          // 3) Web 'hoppRequestLocation' → konum iznini iste
+          controller.addJavaScriptHandler(
+            handlerName: 'hoppRequestLocation',
+            callback: (args) async {
+              final st = await Permission.location.request();
+              // izinden sonra GPS kapalıysa sistem "Konum Doğruluğu" penceresini aç
+              if (st.isGranted) await _ensureLocationService();
+              return st.isGranted;
+            },
+          );
+          // 4) Web 'hoppOpenExternal' → bilet linkini SİSTEM TARAYICISINDA aç
+          //    (uygulama açık kalır; kullanıcı geri dönebilir)
+          controller.addJavaScriptHandler(
+            handlerName: 'hoppOpenExternal',
+            callback: (args) async {
+              if (args.isEmpty) return false;
+              final url = args[0].toString();
+              try {
+                await launchUrl(WebUri(url), mode: LaunchMode.externalApplication);
+                return true;
+              } catch (e) {
+                return false;
+              }
+            },
+          );
+          // 5) Web 'hoppShowRewarded' → ödüllü reklam göster; ödül kazanılırsa
+          //    true döner → web kilitli profili açar
+          controller.addJavaScriptHandler(
+            handlerName: 'hoppShowRewarded',
+            callback: (args) async {
+              return await _showRewarded();
+            },
+          );
         },
+        // WebView içinde yeni pencere/sekme açma isteği (target=_blank) →
+        // SİSTEM TARAYICISINDA aç, böylece ana uygulama açık kalır.
         onCreateWindow: (controller, createWindowAction) async {
-          controller.loadUrl(urlRequest: createWindowAction.request);
+          final req = createWindowAction.request;
+          if (req.url != null) {
+            try { await launchUrl(req.url!, mode: LaunchMode.externalApplication); } catch (e) {}
+          }
           return false;
         },
+        // Kamera / mikrofon istekleri → otomatik izin ver
         onPermissionRequest: (controller, request) async {
           return PermissionResponse(
             resources: request.resources,
             action: PermissionResponseAction.GRANT,
           );
         },
+        // Konum izni (harita)
         onGeolocationPermissionsShowPrompt: (controller, origin) async {
           return GeolocationPermissionShowPromptResponse(
             origin: origin,
@@ -96,6 +273,18 @@ class _WebScreenState extends State<WebScreen> {
             retain: true,
           );
         },
+              ),
+            ),
+            // ── Banner: alt menünün altında, ekran dibinde ──
+            if (_bannerReady && _banner != null)
+              Container(
+                color: const Color(0xFF0D1220),
+                width: _banner!.size.width.toDouble(),
+                height: _banner!.size.height.toDouble(),
+                child: AdWidget(ad: _banner!),
+              ),
+          ],
+        ),
       ),
     );
   }
