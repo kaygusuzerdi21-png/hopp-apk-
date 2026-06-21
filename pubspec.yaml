@@ -23,13 +23,13 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/icon.png
-    - assets/icon-foreground.png
+    - hopp.png
+    - hopp_foreground.png
 
 flutter_launcher_icons:
   android: true
   ios: false
-  image_path: "assets/icon.png"
+  image_path: "hopp.png"
   adaptive_icon_background: "#0E7DFD"
-  adaptive_icon_foreground: "assets/icon-foreground.png"
+  adaptive_icon_foreground: "hopp_foreground.png"
   remove_alpha_ios: true
