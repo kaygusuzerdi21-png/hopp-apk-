@@ -184,7 +184,7 @@ class _WebScreenState extends State<WebScreen> {
             Expanded(
               child: InAppWebView(
         initialUrlRequest:
-            URLRequest(url: WebUri('https://hoppapp.netlify.app/')),
+            URLRequest(url: WebUri('https://hopptrapp.netlify.app/')),
         initialSettings: InAppWebViewSettings(
           javaScriptEnabled: true,
           mediaPlaybackRequiresUserGesture: false,
