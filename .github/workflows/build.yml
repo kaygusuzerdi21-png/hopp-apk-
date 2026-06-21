@@ -27,6 +27,12 @@ jobs:
       - name: Android iskeletini uret
         run: flutter create --platforms=android --org com.hopp.app --project-name hopp .
 
+      - name: Paket adini ayarla (com.hopp.dating)
+        run: |
+          GR=android/app/build.gradle
+          sed -i -E 's/applicationId(\s*=?\s*)"[^"]*"/applicationId = "com.hopp.dating"/' "$GR"
+          echo "----- applicationId -----"; grep applicationId "$GR" || true
+
       - name: Imza anahtarini hazirla
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
@@ -40,7 +46,6 @@ jobs:
           GR=android/app/build.gradle
           sed -i '0,/android {/s##def keystoreProperties = new Properties()\ndef keystorePropertiesFile = rootProject.file("key.properties")\nif (keystorePropertiesFile.exists()) { keystoreProperties.load(new FileInputStream(keystorePropertiesFile)) }\n\nandroid {\n    signingConfigs {\n        release {\n            keyAlias keystoreProperties["keyAlias"]\n            keyPassword keystoreProperties["keyPassword"]\n            storeFile keystoreProperties["storeFile"] ? file(keystoreProperties["storeFile"]) : null\n            storePassword keystoreProperties["storePassword"]\n        }\n    }##' "$GR"
           sed -i -E 's/signingConfig *=? *signingConfigs\.debug/signingConfig signingConfigs.release/' "$GR"
-
           echo "----- build.gradle -----"; cat "$GR"
 
       - name: Izinleri ekle
