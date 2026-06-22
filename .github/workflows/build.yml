@@ -66,11 +66,15 @@ jobs:
         continue-on-error: true
         run: dart run flutter_launcher_icons || echo "ikon atlandi"
 
+      - name: Surum kodunu hesapla (her zaman benzersiz)
+        id: vercode
+        run: echo "code=$(date +%s)" >> "$GITHUB_OUTPUT"
+
       - name: APK derle
-        run: flutter build apk --release --build-number=${{ github.run_number }}
+        run: flutter build apk --release --build-number=${{ steps.vercode.outputs.code }}
 
       - name: AAB derle (Play Store icin)
-        run: flutter build appbundle --release --build-number=${{ github.run_number }}
+        run: flutter build appbundle --release --build-number=${{ steps.vercode.outputs.code }}
 
       - name: APK yukle
         uses: actions/upload-artifact@v4
