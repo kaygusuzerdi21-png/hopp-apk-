@@ -65,7 +65,7 @@ void main() {
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.light,
-    systemNavigationBarColor: Color(0xFF0D1220),
+    systemNavigationBarColor: Color(0xFFF6F3EE),
   ));
   runApp(const HoppApp());
 }
@@ -183,7 +183,7 @@ class _WebScreenState extends State<WebScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0D1220),
+      backgroundColor: const Color(0xFFF6F3EE),
       body: SafeArea(
         top: false,
         child: Column(
@@ -289,11 +289,12 @@ class _WebScreenState extends State<WebScreen> {
         },
               ),
             ),
-            // â”€â”€ Banner: alt menÃ¼nÃ¼n altÄ±nda, ekran dibinde â”€â”€
+            // â”€â”€ Banner: alt menÃ¼nÃ¼n altÄ±nda, ekran dibinde (krem zemin) â”€â”€
             if (_bannerReady && _banner != null)
               Container(
-                color: const Color(0xFF0D1220),
-                width: _banner!.size.width.toDouble(),
+                color: const Color(0xFFF6F3EE),
+                alignment: Alignment.center,
+                width: double.infinity,
                 height: _banner!.size.height.toDouble(),
                 child: AdWidget(ad: _banner!),
               ),
