@@ -9,28 +9,31 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
-// ── AdMob reklam birimi ID'leri ───────────────────────────────────────────
-// ŞU AN GOOGLE TEST ID'LERİ KULLANILIYOR (gerçek para kazandırmaz, güvenle
-// test edebilirsin). AdMob hesabını açıp kendi reklam birimlerini
-// oluşturunca AŞAĞIDAKİ 3 değeri kendi ID'lerinle değiştir + AndroidManifest
-// içindeki APPLICATION_ID'yi de güncelle (build.yml'de).
+// â”€â”€ AdMob reklam birimi ID'leri â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ÅU AN GOOGLE TEST ID'LERÄ° KULLANILIYOR (gerÃ§ek para kazandÄ±rmaz, gÃ¼venle
+// test edebilirsin). AdMob hesabÄ±nÄ± aÃ§Ä±p kendi reklam birimlerini
+// oluÅŸturunca AÅAÄIDAKÄ° 3 deÄŸeri kendi ID'lerinle deÄŸiÅŸtir + AndroidManifest
+// iÃ§indeki APPLICATION_ID'yi de gÃ¼ncelle (build.yml'de).
 const String _kBannerAdUnit = 'ca-app-pub-3092168413729990/5053559271';   // hopp banner
 const String _kRewardedAdUnit = 'ca-app-pub-3092168413729990/2876998241'; // hopp odullu
 
-// ── Uygulama sürümü (güncelleme bannerı için) ───────────────────────────────
-// Play Store'a YENİ bir AAB yüklediğinde bu sayıyı +1 artır VE web tarafındaki
-// config.jsx → latestAppBuild değerini AYNI sayı yap. Böylece eski sürümdeki
-// kullanıcılar uygulamayı açınca "Yeni sürüm hazır" bannerı görür.
+// â”€â”€ Uygulama sÃ¼rÃ¼mÃ¼ (gÃ¼ncelleme bannerÄ± iÃ§in) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Play Store'a YENÄ° bir AAB yÃ¼klediÄŸinde bu sayÄ±yÄ± +1 artÄ±r VE web tarafÄ±ndaki
+// config.jsx â†’ latestAppBuild deÄŸerini AYNI sayÄ± yap. BÃ¶ylece eski sÃ¼rÃ¼mdeki
+// kullanÄ±cÄ±lar uygulamayÄ± aÃ§Ä±nca "Yeni sÃ¼rÃ¼m hazÄ±r" bannerÄ± gÃ¶rÃ¼r.
 const int kAppBuild = 1;
+// Ayarlar ekranÄ±nda gÃ¶sterilen sÃ¼rÃ¼m adÄ±. Play Console'a yÃ¼klediÄŸin sÃ¼rÃ¼m
+// adÄ±yla AYNI yap (pubspec.yaml version ile de eÅŸleÅŸsin).
+const String kAppVersionName = '1.0.0';
 
-// Telefona GERÇEK bildirim düşürmek için yerel bildirim eklentisi.
-// Web katmanı (notifications.jsx) köprüden 'hoppNotify' çağırır → burada OS
-// bildirimi gösterilir. Android WebView Web Notification API'sini desteklemediği
-// için bu köprü şarttır.
+// Telefona GERÃ‡EK bildirim dÃ¼ÅŸÃ¼rmek iÃ§in yerel bildirim eklentisi.
+// Web katmanÄ± (notifications.jsx) kÃ¶prÃ¼den 'hoppNotify' Ã§aÄŸÄ±rÄ±r â†’ burada OS
+// bildirimi gÃ¶sterilir. Android WebView Web Notification API'sini desteklemediÄŸi
+// iÃ§in bu kÃ¶prÃ¼ ÅŸarttÄ±r.
 final FlutterLocalNotificationsPlugin _notif = FlutterLocalNotificationsPlugin();
 const AndroidNotificationChannel _channel = AndroidNotificationChannel(
   'hopp_default', 'hopp Bildirimleri',
-  description: 'Mesaj, beğeni ve yol kesişme bildirimleri',
+  description: 'Mesaj, beÄŸeni ve yol kesiÅŸme bildirimleri',
   importance: Importance.high,
 );
 
@@ -49,7 +52,7 @@ Future<void> _showNotif(String title, String body) async {
     const NotificationDetails(
       android: AndroidNotificationDetails(
         'hopp_default', 'hopp Bildirimleri',
-        channelDescription: 'Mesaj, beğeni ve yol kesişme bildirimleri',
+        channelDescription: 'Mesaj, beÄŸeni ve yol kesiÅŸme bildirimleri',
         importance: Importance.high,
         priority: Priority.high,
       ),
@@ -59,8 +62,8 @@ Future<void> _showNotif(String title, String body) async {
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  MobileAds.instance.initialize(); // AdMob başlat
-  // tam ekran (edge-to-edge) + şeffaf durum çubuğu → üstte siyah şerit kalmaz
+  MobileAds.instance.initialize(); // AdMob baÅŸlat
+  // tam ekran (edge-to-edge) + ÅŸeffaf durum Ã§ubuÄŸu â†’ Ã¼stte siyah ÅŸerit kalmaz
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
@@ -107,7 +110,7 @@ class _WebScreenState extends State<WebScreen> {
     super.dispose();
   }
 
-  // ── Banner (alt menünün altında, ekran dibinde) ──
+  // â”€â”€ Banner (alt menÃ¼nÃ¼n altÄ±nda, ekran dibinde) â”€â”€
   void _loadBanner() {
     _banner = BannerAd(
       adUnitId: _kBannerAdUnit,
@@ -120,7 +123,7 @@ class _WebScreenState extends State<WebScreen> {
     )..load();
   }
 
-  // ── Ödüllü reklam (kilitli profili açmak için) ──
+  // â”€â”€ Ã–dÃ¼llÃ¼ reklam (kilitli profili aÃ§mak iÃ§in) â”€â”€
   void _loadRewarded() {
     RewardedAd.load(
       adUnitId: _kRewardedAdUnit,
@@ -132,7 +135,7 @@ class _WebScreenState extends State<WebScreen> {
     );
   }
 
-  // Reklamı göster; ödül kazanılırsa true döner (web bunu bekler)
+  // ReklamÄ± gÃ¶ster; Ã¶dÃ¼l kazanÄ±lÄ±rsa true dÃ¶ner (web bunu bekler)
   Future<bool> _showRewarded() async {
     final ad = _rewarded;
     if (ad == null) { _loadRewarded(); return false; }
@@ -154,16 +157,16 @@ class _WebScreenState extends State<WebScreen> {
 
   Future<void> _bootstrap() async {
     await _initNotifications();
-    // açılışta kamera/mikrofon/konum + (Android 13+) bildirim izinlerini iste
+    // aÃ§Ä±lÄ±ÅŸta kamera/mikrofon/konum + (Android 13+) bildirim izinlerini iste
     await [
       Permission.camera,
       Permission.microphone,
       Permission.location,
       Permission.notification,
     ].request();
-    // GPS kapalıysa, Google'ın "Konum Doğruluğu / Etkinleştir" sistem
-    // penceresini aç — kullanıcı tek dokunuşla konumu açar (manuel
-    // kontrol panelinden açmaya gerek kalmaz).
+    // GPS kapalÄ±ysa, Google'Ä±n "Konum DoÄŸruluÄŸu / EtkinleÅŸtir" sistem
+    // penceresini aÃ§ â€” kullanÄ±cÄ± tek dokunuÅŸla konumu aÃ§ar (manuel
+    // kontrol panelinden aÃ§maya gerek kalmaz).
     await _ensureLocationService();
   }
 
@@ -172,11 +175,11 @@ class _WebScreenState extends State<WebScreen> {
       final location = loc.Location();
       bool enabled = await location.serviceEnabled();
       if (!enabled) {
-        // → "Devam etmek için cihazınızın Konum Doğruluğu'nu kullanması gerekiyor"
+        // â†’ "Devam etmek iÃ§in cihazÄ±nÄ±zÄ±n Konum DoÄŸruluÄŸu'nu kullanmasÄ± gerekiyor"
         enabled = await location.requestService();
       }
     } catch (_) {
-      // konum servisi sorgulanamazsa sessizce geç (uygulama yine de açılır)
+      // konum servisi sorgulanamazsa sessizce geÃ§ (uygulama yine de aÃ§Ä±lÄ±r)
     }
   }
 
@@ -202,16 +205,16 @@ class _WebScreenState extends State<WebScreen> {
           useHybridComposition: true,
           supportZoom: false,
         ),
-        // Uygulamanın sürümünü web'e bildir (güncelleme bannerı için).
+        // UygulamanÄ±n sÃ¼rÃ¼mÃ¼nÃ¼ web'e bildir (gÃ¼ncelleme bannerÄ± iÃ§in).
         initialUserScripts: UnmodifiableListView<UserScript>([
           UserScript(
-            source: "window.hoppNativeBuild = $kAppBuild;",
+            source: "window.hoppNativeBuild = $kAppBuild; window.hoppNativeVersion = '$kAppVersionName';",
             injectionTime: UserScriptInjectionTime.AT_DOCUMENT_START,
           ),
         ]),
         onWebViewCreated: (controller) {
-          // ── Web ↔ Native köprüsü ──────────────────────────────────────
-          // 1) Web 'hoppNotify' çağırınca telefona gerçek bildirim düşür
+          // â”€â”€ Web â†” Native kÃ¶prÃ¼sÃ¼ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+          // 1) Web 'hoppNotify' Ã§aÄŸÄ±rÄ±nca telefona gerÃ§ek bildirim dÃ¼ÅŸÃ¼r
           controller.addJavaScriptHandler(
             handlerName: 'hoppNotify',
             callback: (args) async {
@@ -221,7 +224,7 @@ class _WebScreenState extends State<WebScreen> {
               return true;
             },
           );
-          // 2) Web 'hoppRequestNotif' → Android 13+ bildirim iznini iste
+          // 2) Web 'hoppRequestNotif' â†’ Android 13+ bildirim iznini iste
           controller.addJavaScriptHandler(
             handlerName: 'hoppRequestNotif',
             callback: (args) async {
@@ -229,18 +232,18 @@ class _WebScreenState extends State<WebScreen> {
               return st.isGranted;
             },
           );
-          // 3) Web 'hoppRequestLocation' → konum iznini iste
+          // 3) Web 'hoppRequestLocation' â†’ konum iznini iste
           controller.addJavaScriptHandler(
             handlerName: 'hoppRequestLocation',
             callback: (args) async {
               final st = await Permission.location.request();
-              // izinden sonra GPS kapalıysa sistem "Konum Doğruluğu" penceresini aç
+              // izinden sonra GPS kapalÄ±ysa sistem "Konum DoÄŸruluÄŸu" penceresini aÃ§
               if (st.isGranted) await _ensureLocationService();
               return st.isGranted;
             },
           );
-          // 4) Web 'hoppOpenExternal' → bilet linkini SİSTEM TARAYICISINDA aç
-          //    (uygulama açık kalır; kullanıcı geri dönebilir)
+          // 4) Web 'hoppOpenExternal' â†’ bilet linkini SÄ°STEM TARAYICISINDA aÃ§
+          //    (uygulama aÃ§Ä±k kalÄ±r; kullanÄ±cÄ± geri dÃ¶nebilir)
           controller.addJavaScriptHandler(
             handlerName: 'hoppOpenExternal',
             callback: (args) async {
@@ -254,8 +257,8 @@ class _WebScreenState extends State<WebScreen> {
               }
             },
           );
-          // 5) Web 'hoppShowRewarded' → ödüllü reklam göster; ödül kazanılırsa
-          //    true döner → web kilitli profili açar
+          // 5) Web 'hoppShowRewarded' â†’ Ã¶dÃ¼llÃ¼ reklam gÃ¶ster; Ã¶dÃ¼l kazanÄ±lÄ±rsa
+          //    true dÃ¶ner â†’ web kilitli profili aÃ§ar
           controller.addJavaScriptHandler(
             handlerName: 'hoppShowRewarded',
             callback: (args) async {
@@ -263,8 +266,8 @@ class _WebScreenState extends State<WebScreen> {
             },
           );
         },
-        // WebView içinde yeni pencere/sekme açma isteği (target=_blank) →
-        // SİSTEM TARAYICISINDA aç, böylece ana uygulama açık kalır.
+        // WebView iÃ§inde yeni pencere/sekme aÃ§ma isteÄŸi (target=_blank) â†’
+        // SÄ°STEM TARAYICISINDA aÃ§, bÃ¶ylece ana uygulama aÃ§Ä±k kalÄ±r.
         onCreateWindow: (controller, createWindowAction) async {
           final req = createWindowAction.request;
           if (req.url != null) {
@@ -272,7 +275,7 @@ class _WebScreenState extends State<WebScreen> {
           }
           return false;
         },
-        // Kamera / mikrofon istekleri → otomatik izin ver
+        // Kamera / mikrofon istekleri â†’ otomatik izin ver
         onPermissionRequest: (controller, request) async {
           return PermissionResponse(
             resources: request.resources,
@@ -289,7 +292,7 @@ class _WebScreenState extends State<WebScreen> {
         },
               ),
             ),
-            // ── Banner: alt menünün altında, ekran dibinde (krem zemin) ──
+            // â”€â”€ Banner: alt menÃ¼nÃ¼n altÄ±nda, ekran dibinde (krem zemin) â”€â”€
             if (_bannerReady && _banner != null)
               Container(
                 color: const Color(0xFFF6F3EE),
