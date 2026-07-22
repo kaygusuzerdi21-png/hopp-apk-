@@ -28,9 +28,9 @@ jobs:
 
       - name: pin-gradle
         run: |
-          sed -i -E 's#distributionUrl=.*#distributionUrl=https\\://services.gradle.org/distributions/gradle-8.9-all.zip#' android/gradle/wrapper/gradle-wrapper.properties
+          sed -i -E 's#distributionUrl=.*#distributionUrl=https\\://services.gradle.org/distributions/gradle-8.11.1-all.zip#' android/gradle/wrapper/gradle-wrapper.properties
           SG=android/settings.gradle.kts
-          sed -i -E 's/id\("com.android.application"\) version "[^"]*"/id("com.android.application") version "8.6.0"/' "$SG"
+          sed -i -E 's/id\("com.android.application"\) version "[^"]*"/id("com.android.application") version "8.9.1"/' "$SG"
           sed -i -E 's/id\("org.jetbrains.kotlin.android"\) version "[^"]*"/id("org.jetbrains.kotlin.android") version "2.1.0"/' "$SG"
           echo "----- gradle-wrapper -----"; cat android/gradle/wrapper/gradle-wrapper.properties
           echo "----- settings.gradle.kts -----"; cat "$SG"
@@ -41,6 +41,8 @@ jobs:
           sed -i -E 's/applicationId = "[^"]*"/applicationId = "com.hopp.dating"/' "$GR"
           sed -i -E 's/compileSdk = [A-Za-z0-9._]+/compileSdk = 36/' "$GR"
           sed -i -E 's/targetSdk = [A-Za-z0-9._]+/targetSdk = 36/' "$GR"
+          sed -i '0,/compileOptions {/s##compileOptions {\n        isCoreLibraryDesugaringEnabled = true#' "$GR"
+          printf '\ndependencies {\n    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")\n}\n' >> "$GR"
           grep -E "applicationId|compileSdk|targetSdk" "$GR" || true
 
       - name: setup-signing
