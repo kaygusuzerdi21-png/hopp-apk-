@@ -26,6 +26,15 @@ jobs:
       - name: create-android
         run: flutter create --platforms=android --org com.hopp.app --project-name hopp .
 
+      - name: pin-gradle
+        run: |
+          sed -i -E 's#distributionUrl=.*#distributionUrl=https\\://services.gradle.org/distributions/gradle-8.9-all.zip#' android/gradle/wrapper/gradle-wrapper.properties
+          SG=android/settings.gradle.kts
+          sed -i -E 's/id\("com.android.application"\) version "[^"]*"/id("com.android.application") version "8.6.0"/' "$SG"
+          sed -i -E 's/id\("org.jetbrains.kotlin.android"\) version "[^"]*"/id("org.jetbrains.kotlin.android") version "2.1.0"/' "$SG"
+          echo "----- gradle-wrapper -----"; cat android/gradle/wrapper/gradle-wrapper.properties
+          echo "----- settings.gradle.kts -----"; cat "$SG"
+
       - name: set-package-and-sdk
         run: |
           GR=android/app/build.gradle.kts
