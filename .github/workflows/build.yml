@@ -62,6 +62,10 @@ jobs:
       - name: pub-get
         run: flutter pub get
 
+      - name: patch-inappwebview-proguard
+        run: |
+          find ~/.pub-cache -path '*flutter_inappwebview_android*/android/build.gradle' -print -exec sed -i "s/proguard-android.txt/proguard-android-optimize.txt/g" {} +
+
       - name: launcher-icon
         continue-on-error: true
         run: dart run flutter_launcher_icons || echo "icon skipped"
