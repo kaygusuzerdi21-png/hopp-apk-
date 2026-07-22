@@ -1,91 +1,91 @@
-isim: APK Derle
+name: APK Derle
 
-Açık:
-  itmek:
-    dallar: [ ana dal, ana dal ]
-  iş akışı_dağıtımı:
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
 
-İşler:
-  inşa etmek:
+jobs:
+  build:
     runs-on: ubuntu-latest
-    Adımlar:
-      - isim: Kodu cek
-        kullanımlar: actions/checkout@v4
+    steps:
+      - name: Kodu cek
+        uses: actions/checkout@v4
 
-      - isim: Java kursu
+      - name: Java kur
         uses: actions/setup-java@v4
-        ile:
-          dağıtım: temurin
-          Java sürümü: "17"
+        with:
+          distribution: temurin
+          java-version: "17"
 
-      - isim: Flutter kursu
+      - name: Flutter kur
         uses: subosito/flutter-action@v2
-        ile:
-          kanal: kararlı
+        with:
+          channel: stable
 
-      - isim: Android yazılarını üret
-        Çalıştır: flutter create --platforms=android --org com.hopp.app --project-name hopp .
+      - name: Android iskeletini uret
+        run: flutter create --platforms=android --org com.hopp.app --project-name hopp .
 
-      - adı: Paket adini ve SDK ayarla
-        çalıştır: |
+      - name: Paket adini ve SDK ayarla
+        run: |
           GR=android/app/build.gradle
           sed -i -E 's/applicationId(\s*=?\s*)"[^"]*"/applicationId = "com.hopp.dating"/' "$GR"
           sed -i -E 's/compileSdk(Version)?(\s*=?\s*)[A-Za-z0-9._]+/compileSdk = 36/' "$GR"
           sed -i -E 's/targetSdk(Version)?(\s*=?\s*)[A-Za-z0-9._]+/targetSdk = 36/' "$GR"
           echo "----- build.gradle defaultConfig -----"; grep -E "applicationId|compileSdk|targetSdk" "$GR" || true
 
-      - isim: İmza anahtarınızı hazırla
-        ortam:
+      - name: Imza anahtarini hazirla
+        env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-        çalıştır: |
-          eğer [ -z "$KEYSTORE_BASE64" ]; o zaman
-            echo "HATA: KEYSTORE_BASE64 secret yok. Once 'Imza Keyi Uret' iş akışı'nı calistir ve secret ekle."
-            çıkış 1
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "HATA: KEYSTORE_BASE64 secret yok. Once 'Imza Anahtari Uret' workflow'unu calistir ve secret ekle."
+            exit 1
           fi
           echo "$KEYSTORE_BASE64" | base64 -d > android/app/upload.jks
           printf 'storePassword=hopp2026\nkeyPassword=hopp2026\nkeyAlias=upload\nstoreFile=upload.jks\n' > android/key.properties
           GR=android/app/build.gradle
-          sed -i '0,/android {/s##def keystoreProperties = new Properties()\ndef keystorePropertiesFile = rootProject.file("key.properties")\nif (keystorePropertiesFile.exists()) { keystoreProperties.load(new FileInputStream(keystorePropertiesFile)) }\n\nandroid {\n signingConfigs {\n release {\n keyAlias ​​keystoreProperties["keyAlias"]\n keyPassword keystoreProperties["keyPassword"]\n storeFile keystoreProperties["storeFile"] ? file(keystoreProperties["storeFile"]) : null\n storePassword keystoreProperties["storePassword"]\n }\n }##' "$GR"
+          sed -i '0,/android {/s##def keystoreProperties = new Properties()\ndef keystorePropertiesFile = rootProject.file("key.properties")\nif (keystorePropertiesFile.exists()) { keystoreProperties.load(new FileInputStream(keystorePropertiesFile)) }\n\nandroid {\n    signingConfigs {\n        release {\n            keyAlias keystoreProperties["keyAlias"]\n            keyPassword keystoreProperties["keyPassword"]\n            storeFile keystoreProperties["storeFile"] ? file(keystoreProperties["storeFile"]) : null\n            storePassword keystoreProperties["storePassword"]\n        }\n    }##' "$GR"
           sed -i -E 's/signingConfig *=? *signingConfigs\.debug/signingConfig signingConfigs.release/' "$GR"
           echo "----- build.gradle -----"; cat "$GR"
 
-      - name: İzlerini ekle
-        çalıştır: |
+      - name: Izinleri ekle
+        run: |
           MAN=android/app/src/main/AndroidManifest.xml
-          İZİNLER='<uses-permission android:name="android.permission.INTERNET"/><uses-permission android:name="android.permission.CAMERA"/><uses-permission android:name="android.permission.RECORD_AUDIO"/><uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/><uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/><uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>'
+          PERMS='<uses-permission android:name="android.permission.INTERNET"/><uses-permission android:name="android.permission.CAMERA"/><uses-permission android:name="android.permission.RECORD_AUDIO"/><uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/><uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/><uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>'
           sed -i "s#<application#${PERMS}<application#" "$MAN"
-          # AdMob Uygulama Kimliği (hopp gercek)
+          # AdMob App ID (hopp gercek)
           ADMOB='<meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="ca-app-pub-3092168413729990~6832555121"/>'
           sed -i "s#</application>#${ADMOB}</application>#" "$MAN"
-          kedi "$MAN"
+          cat "$MAN"
 
       - name: Paketleri al
-        çalıştır: flutter pub get
+        run: flutter pub get
 
       - name: Uygulama ikonunu uret
-        hata durumunda devam et: true
-        koş: dart koş flutter_launcher_icons || echo "ikon atlandi (assets/icon.png yoksa varsayilan ikon kullanılır)"
+        continue-on-error: true
+        run: dart run flutter_launcher_icons || echo "ikon atlandi (assets/icon.png yoksa varsayilan ikon kullanilir)"
 
-      - name: Surumun şifreleyeceği hesapla (her zaman benzersiz)
+      - name: Surum kodunu hesapla (her zaman benzersiz)
         id: vercode
-        çalıştır: echo "code=$(date +%s)" >> "$GITHUB_OUTPUT"
+        run: echo "code=$(date +%s)" >> "$GITHUB_OUTPUT"
 
-      - isim: APK derle
-        Çalıştır: flutter build apk --release --build-number=${{ steps.vercode.outputs.code }}
+      - name: APK derle
+        run: flutter build apk --release --build-number=${{ steps.vercode.outputs.code }}
 
-      - isim: AAB derle (Play Store için)
-        Çalıştır: flutter build appbundle --release --build-number=${{ steps.vercode.outputs.code }}
+      - name: AAB derle (Play Store icin)
+        run: flutter build appbundle --release --build-number=${{ steps.vercode.outputs.code }}
 
-      - isim: APK yukle
+      - name: APK yukle
         uses: actions/upload-artifact@v4
-        ile:
-          isim: hopp-apk
-          yol: build/app/outputs/flutter-apk/app-release.apk
-          Dosya bulunamadıysa: hata
+        with:
+          name: hopp-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
 
-      - isim: AAB yukle
+      - name: AAB yukle
         uses: actions/upload-artifact@v4
-        ile:
-          isim: hopp-aab
-          yol: build/app/outputs/bundle/release/app-release.aab
-          Dosya bulunamadıysa: hata
+        with:
+          name: hopp-aab
+          path: build/app/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
