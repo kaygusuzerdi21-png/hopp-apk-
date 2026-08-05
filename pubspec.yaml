@@ -15,13 +15,14 @@ dependencies:
   flutter_local_notifications: ^17.2.3
   url_launcher: ^6.3.0
   google_mobile_ads: ^6.0.0
-  record: ^5.1.2
+  record: 5.0.5
 
-# record_linux 0.7.2, record_platform_interface 1.6.0 ile uyumsuz (startStream/
-# hasPermission eksik) → derleme kirilir. Arayuzu uyumlu surume sabitliyoruz.
-# Android derlemesini etkilemez; sadece transitif linux/interface surumu.
+# Android-only. record 5.1.x -> record_linux 0.7.2 yeni arayuzle (startStream/
+# hasPermission) cakisip derlemeyi kirar. 5.0.5 + asagidaki override'lar
+# tutarli surumleri sabitler. Linux/Windows/macOS Android derlemesini etkilemez.
 dependency_overrides:
-  record_platform_interface: 1.5.0
+  record_linux: 0.7.1
+  record_platform_interface: 1.0.4
 
 dev_dependencies:
   flutter_lints: ^4.0.0
