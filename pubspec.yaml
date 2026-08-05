@@ -1,5 +1,5 @@
 name: hopp
-description: hopp â€” sosyal/tanÄ±ÅŸma uygulamasÄ± (WebView)
+description: hopp — sosyal/tanışma uygulaması (WebView)
 publish_to: "none"
 version: 1.0.0+1
 
@@ -15,6 +15,7 @@ dependencies:
   flutter_local_notifications: ^17.2.3
   url_launcher: ^6.3.0
   google_mobile_ads: ^6.0.0
+  record: ^5.1.2
 
 dev_dependencies:
   flutter_lints: ^4.0.0
