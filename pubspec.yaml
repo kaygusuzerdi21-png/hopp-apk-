@@ -17,6 +17,12 @@ dependencies:
   google_mobile_ads: ^6.0.0
   record: ^5.1.2
 
+# record_linux 0.7.2, record_platform_interface 1.6.0 ile uyumsuz (startStream/
+# hasPermission eksik) → derleme kirilir. Arayuzu uyumlu surume sabitliyoruz.
+# Android derlemesini etkilemez; sadece transitif linux/interface surumu.
+dependency_overrides:
+  record_platform_interface: 1.5.0
+
 dev_dependencies:
   flutter_lints: ^4.0.0
   flutter_launcher_icons: ^0.13.1
