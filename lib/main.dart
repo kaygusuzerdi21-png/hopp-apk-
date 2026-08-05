@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:collection';
+import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -8,6 +10,7 @@ import 'package:location/location.dart' as loc;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:record/record.dart';
 
 // ── AdMob reklam birimi ID'leri ───────────────────────────────────────────
 // ŞU AN GOOGLE TEST ID'LERİ KULLANILIYOR (gerçek para kazandırmaz, güvenle
@@ -94,6 +97,9 @@ class _WebScreenState extends State<WebScreen> {
   BannerAd? _banner;
   bool _bannerReady = false;
   RewardedAd? _rewarded;
+  // uygulamanın kendi native ses kaydedicisi (WebView'e bağlı değil)
+  final AudioRecorder _rec = AudioRecorder();
+  String? _recPath;
 
   @override
   void initState() {
@@ -265,6 +271,57 @@ class _WebScreenState extends State<WebScreen> {
               return await _showRewarded();
             },
           );
+          // 6) UYGULAMANIN KENDİ MİKROFONU — native ses kaydı (record eklentisi).
+          //    WebView getUserMedia'ya HİÇ bağlı değil; telefon donanımıyla
+          //    doğrudan kaydeder. hoppRecordStart → true, hoppRecordStop →
+          //    'data:audio/mp4;base64,...' döner (web bunu mesaj olarak gönderir).
+          controller.addJavaScriptHandler(
+            handlerName: 'hoppRecordStart',
+            callback: (args) async {
+              try {
+                if (!await _rec.hasPermission()) {
+                  final st = await Permission.microphone.request();
+                  if (!st.isGranted) return false;
+                  if (!await _rec.hasPermission()) return false;
+                }
+                final dir = Directory.systemTemp.path;
+                _recPath = '$dir/hopp_${DateTime.now().millisecondsSinceEpoch}.m4a';
+                await _rec.start(
+                  const RecordConfig(encoder: AudioEncoder.aacLc, bitRate: 96000, sampleRate: 44100),
+                  path: _recPath!,
+                );
+                return true;
+              } catch (e) {
+                return false;
+              }
+            },
+          );
+          controller.addJavaScriptHandler(
+            handlerName: 'hoppRecordStop',
+            callback: (args) async {
+              try {
+                final path = await _rec.stop();
+                final p = path ?? _recPath;
+                if (p == null) return null;
+                final f = File(p);
+                if (!await f.exists()) return null;
+                final bytes = await f.readAsBytes();
+                try { await f.delete(); } catch (_) {}
+                if (bytes.isEmpty) return null;
+                return 'data:audio/mp4;base64,${base64Encode(bytes)}';
+              } catch (e) {
+                return null;
+              }
+            },
+          );
+          controller.addJavaScriptHandler(
+            handlerName: 'hoppRecordCancel',
+            callback: (args) async {
+              try { await _rec.stop(); } catch (_) {}
+              try { if (_recPath != null) await File(_recPath!).delete(); } catch (_) {}
+              return true;
+            },
+          );
         },
         // WebView içinde yeni pencere/sekme açma isteği (target=_blank) →
         // SİSTEM TARAYICISINDA aç, böylece ana uygulama açık kalır.
@@ -307,3 +364,4 @@ class _WebScreenState extends State<WebScreen> {
     );
   }
 }
+
